@@ -6,6 +6,7 @@ mod configuration;
 mod constants;
 mod data;
 mod exporter;
+mod globals;
 mod horizon;
 mod http;
 mod sessions;

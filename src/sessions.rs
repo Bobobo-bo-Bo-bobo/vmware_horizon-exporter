@@ -2,6 +2,7 @@ use crate::configuration;
 use crate::constants;
 use crate::data;
 use crate::exporter;
+use crate::globals;
 use crate::horizon;
 
 use lazy_static::lazy_static;
@@ -133,8 +134,7 @@ pub fn session_metric_update(
     flush_session_protocol_map(&mut pool_protocols);
     flush_session_type_map(&mut types);
 
-    debug!("sessions.rs:session_metric_update: getting list of desktop pools");
-    let dsktp_pools = horizon::get_desktop_pools(cfg, client, token)?;
+    let dsktp_pools = globals::DESKTOP_POOLS.lock().unwrap().clone();
 
     for dp in dsktp_pools {
         if cfg.horizon_api.skip_pools_set.contains(&dp.id) {

@@ -1,5 +1,6 @@
 use crate::configuration;
 use crate::constants;
+use crate::globals;
 use crate::horizon;
 use crate::http;
 use crate::sessions;
@@ -57,6 +58,19 @@ fn metric_update(cfg: &configuration::Configuration, client: &mut reqwest::block
         }
     };
 
+    // fetch pool data only once
+    {
+        let mut desktop_pools = globals::DESKTOP_POOLS.lock().unwrap();
+        debug!("exporter.rs:metric_update: getting list of desktop pools");
+        *desktop_pools = match horizon::get_desktop_pools(cfg, client, &tokens.access_token) {
+            Ok(v) => v,
+            Err(e) => {
+                error!("can't get list of desktop pools: {}", e);
+                return;
+            }
+        };
+    }
+
     if let Err(e) = sessions::session_metric_update(cfg, client, &tokens.access_token) {
         error!("session metric update failed: {}", e);
     }
@@ -85,6 +99,7 @@ pub fn fetch(cfg: &configuration::Configuration) -> String {
             return String::new();
         }
     };
+
     metric_update(cfg, &mut http_client);
 
     let encoder = TextEncoder::new();
