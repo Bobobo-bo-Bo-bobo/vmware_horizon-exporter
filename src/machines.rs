@@ -221,37 +221,37 @@ pub fn machine_metric_update(
         set_machine_arch_metrics(&mut arch_map, m);
     }
 
-    prometheus_machine_states(&mstates);
-    prometheus_machine_os(&os_map);
-    prometheus_machine_arch(&arch_map);
+    prometheus_machine_states(&mstates, &cfg.horizon_api);
+    prometheus_machine_os(&os_map, &cfg.horizon_api);
+    prometheus_machine_arch(&arch_map, &cfg.horizon_api);
     Ok(())
 }
 
-fn prometheus_machine_arch(amap: &MachineArchMap) {
+fn prometheus_machine_arch(amap: &MachineArchMap, cfg: &configuration::HorizonAPIConfig) {
     for (pool, archname) in amap.iter() {
         for (arch, count) in archname.iter() {
             exporter::MACHINE_ARCH
-                .with_label_values(&[pool, arch])
+                .with_label_values(&[&cfg.clone().user_defined_pool_uuid_resolve(pool), arch])
                 .set(*count);
         }
     }
 }
 
-fn prometheus_machine_os(omap: &MachineOSMap) {
+fn prometheus_machine_os(omap: &MachineOSMap, cfg: &configuration::HorizonAPIConfig) {
     for (pool, osname) in omap.iter() {
         for (os, count) in osname.iter() {
             exporter::MACHINE_OS
-                .with_label_values(&[pool, os])
+                .with_label_values(&[&cfg.clone().user_defined_pool_uuid_resolve(pool), os])
                 .set(*count);
         }
     }
 }
 
-fn prometheus_machine_states(mmap: &MachineStateMap) {
+fn prometheus_machine_states(mmap: &MachineStateMap, cfg: &configuration::HorizonAPIConfig) {
     for (pool, mstate) in mmap.iter() {
         for (state, count) in mstate.iter() {
             exporter::MACHINE_STATES
-                .with_label_values(&[pool, state])
+                .with_label_values(&[&cfg.clone().user_defined_pool_uuid_resolve(pool), state])
                 .set(*count);
         }
     }
@@ -260,12 +260,17 @@ fn prometheus_machine_states(mmap: &MachineStateMap) {
 fn set_machine_arch_metrics(amap: &mut MachineArchMap, m: &data::Machine) {
     if let Some(arch) = &m.operating_system_architecture {
         match arch.as_str() {
-            constants::ARCH_BIT_64 | constants::ARCH_BIT_32 | constants::ARCH_UNKNOWN => {},
+            constants::ARCH_BIT_64 | constants::ARCH_BIT_32 | constants::ARCH_UNKNOWN => {}
             _ => {
-                warn!("skipping unknown architecture {} for machine id {}", arch, m.id);
+                warn!(
+                    "skipping unknown architecture {} for machine id {}",
+                    arch, m.id
+                );
             }
         };
-        let am = amap.entry(m.desktop_pool_id.to_string()).or_insert_with(HashMap::new);
+        let am = amap
+            .entry(m.desktop_pool_id.to_string())
+            .or_insert_with(HashMap::new);
         let lc_arch = arch.to_lowercase();
         *am.entry(lc_arch).or_insert(0) += 1;
     }

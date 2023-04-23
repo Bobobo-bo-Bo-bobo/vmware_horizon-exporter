@@ -185,10 +185,10 @@ pub fn session_metric_update(
         }
     }
 
-    prometheus_pool_sessions(&pool_sessions);
+    prometheus_pool_sessions(&pool_sessions, &cfg.horizon_api);
     prometheus_agent_versions(&agent_versions);
-    prometheus_pool_session_protocols(&pool_protocols);
-    prometheus_pool_session_types(&types);
+    prometheus_pool_session_protocols(&pool_protocols, &cfg.horizon_api);
+    prometheus_pool_session_types(&types, &cfg.horizon_api);
 
     Ok(())
 }
@@ -201,31 +201,34 @@ fn prometheus_agent_versions(amap: &AgentVersionMap) {
     }
 }
 
-fn prometheus_pool_sessions(pmap: &SessionMap) {
+fn prometheus_pool_sessions(pmap: &SessionMap, cfg: &configuration::HorizonAPIConfig) {
     for (pool, scount) in pmap.iter() {
         for (state, count) in scount.iter() {
             exporter::SESSIONS
-                .with_label_values(&[pool, state])
+                .with_label_values(&[&cfg.clone().user_defined_pool_uuid_resolve(pool), state])
                 .set(*count);
         }
     }
 }
 
-fn prometheus_pool_session_protocols(pmap: &SessionProtocolMap) {
+fn prometheus_pool_session_protocols(
+    pmap: &SessionProtocolMap,
+    cfg: &configuration::HorizonAPIConfig,
+) {
     for (pool, scount) in pmap.iter() {
         for (proto, count) in scount.iter() {
             exporter::SESSION_PROTOCOLS
-                .with_label_values(&[pool, proto])
+                .with_label_values(&[&cfg.clone().user_defined_pool_uuid_resolve(pool), proto])
                 .set(*count);
         }
     }
 }
 
-fn prometheus_pool_session_types(pmap: &SessionTypeMap) {
+fn prometheus_pool_session_types(pmap: &SessionTypeMap, cfg: &configuration::HorizonAPIConfig) {
     for (pool, scount) in pmap.iter() {
         for (_type, count) in scount.iter() {
             exporter::SESSION_TYPES
-                .with_label_values(&[pool, _type])
+                .with_label_values(&[&cfg.clone().user_defined_pool_uuid_resolve(pool), _type])
                 .set(*count);
         }
     }

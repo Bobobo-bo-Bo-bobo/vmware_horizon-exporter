@@ -1,6 +1,6 @@
 use serde::Deserialize;
 use simple_error::bail;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::error::Error;
 use std::fs;
 
@@ -20,11 +20,24 @@ pub struct HorizonAPIConfig {
     pub timeout: Option<u64>,
     pub only_pools: Option<Vec<String>>,
     pub skip_pools: Option<Vec<String>>,
-    //    pub pool_uuid_map: Option<HashMap<String, String>>,
+    pub pool_uuid_map: Option<HashMap<String, String>>,
     #[serde(skip)]
     pub only_pools_set: HashSet<String>,
     #[serde(skip)]
     pub skip_pools_set: HashSet<String>,
+}
+
+impl HorizonAPIConfig {
+    pub fn user_defined_pool_uuid_resolve(self, uuid: &str) -> String {
+        match self.pool_uuid_map {
+            // Some(m) => uuid.to_string(),
+            Some(m) => match m.get(uuid) {
+                Some(v) => v.to_string(),
+                None => uuid.to_string(),
+            },
+            None => uuid.to_string(),
+        }
+    }
 }
 
 pub fn parse_config_file(f: &str) -> Result<Configuration, Box<dyn Error>> {

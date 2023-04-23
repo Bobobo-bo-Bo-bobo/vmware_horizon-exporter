@@ -163,4 +163,3 @@ pub const MACHINE_OS_NAME: &str = "horizon_machine_os_info";
 pub const MACHINE_OS_HELP: &str = "Operating system on virtual machines";
 pub const MACHINE_ARCH_NAME: &str = "horizon_machine_os_arch_info";
 pub const MACHINE_ARCH_HELP: &str = "Architecture of operating system on virtual machine";
-
