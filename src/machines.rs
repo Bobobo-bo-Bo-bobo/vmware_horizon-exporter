@@ -14,6 +14,21 @@ use std::sync::Mutex;
 // Map poolid -> machine state, count
 type MachineStateMap = HashMap<String, HashMap<String, i64>>;
 
+// Map poolid -> os, count
+type MachineOSMap = HashMap<String, HashMap<String, i64>>;
+
+fn flush_machine_os_map(m: &mut MachineOSMap) {
+    for (k1, v1) in m.iter_mut() {
+        for (k2, v2) in v1.iter_mut() {
+            debug!(
+                "machines.rs:flush_machine_os_map: setting m[{}][{}] from {} to 0",
+                k1, k2, *v2
+            );
+            *v2 = 0;
+        }
+    }
+}
+
 fn flush_machine_state_map(m: &mut MachineStateMap) {
     for (k1, v1) in m.iter_mut() {
         for (k2, v2) in v1.iter_mut() {
@@ -26,9 +41,40 @@ fn flush_machine_state_map(m: &mut MachineStateMap) {
     }
 }
 
-fn initialise_machine_map(m: &mut MachineStateMap, p: &str) {
+fn initialise_machine_os_map(m: &mut MachineOSMap, p: &str) {
     debug!(
         "machines.rs:initialise_machine_map: initialising MachineStateMap for {}",
+        p
+    );
+
+    let pm = m
+        .entry(p.to_string())
+        .or_insert_with(HashMap::<String, i64>::new);
+
+    pm.insert(constants::LC_OS_LINUX_CENTOS.to_string(), 0);
+    pm.insert(constants::LC_OS_LINUX_OTHER.to_string(), 0);
+    pm.insert(constants::LC_OS_LINUX_RHEL.to_string(), 0);
+    pm.insert(constants::LC_OS_LINUX_SERVER_OTHER.to_string(), 0);
+    pm.insert(constants::LC_OS_LINUX_SUSE.to_string(), 0);
+    pm.insert(constants::LC_OS_LINUX_UBUNTU.to_string(), 0);
+    pm.insert(constants::LC_OS_UNKNOWN.to_string(), 0);
+    pm.insert(constants::LC_OS_WINDOWS_10.to_string(), 0);
+    pm.insert(constants::LC_OS_WINDOWS_11.to_string(), 0);
+    pm.insert(constants::LC_OS_WINDOWS_7.to_string(), 0);
+    pm.insert(constants::LC_OS_WINDOWS_8.to_string(), 0);
+    pm.insert(constants::LC_OS_WINDOWS_SERVER_2003.to_string(), 0);
+    pm.insert(constants::LC_OS_WINDOWS_SERVER_2008.to_string(), 0);
+    pm.insert(constants::LC_OS_WINDOWS_SERVER_2008_R2.to_string(), 0);
+    pm.insert(constants::LC_OS_WINDOWS_SERVER_2012.to_string(), 0);
+    pm.insert(constants::LC_OS_WINDOWS_SERVER_2012_R2.to_string(), 0);
+    pm.insert(constants::LC_OS_WINDOWS_SERVER_2016_OR_ABOVE.to_string(), 0);
+    pm.insert(constants::LC_OS_WINDOWS_VISTA.to_string(), 0);
+    pm.insert(constants::LC_OS_WINDOWS_XP.to_string(), 0);
+}
+
+fn initialise_machine_state_map(m: &mut MachineStateMap, p: &str) {
+    debug!(
+        "machines.rs:initialise_machine_state_map: initialising MachineStateMap for {}",
         p
     );
 
@@ -91,10 +137,13 @@ pub fn machine_metric_update(
 ) -> Result<(), Box<dyn Error>> {
     lazy_static! {
         static ref MSTATES: Mutex<MachineStateMap> = Mutex::new(HashMap::new());
+        static ref OS: Mutex<MachineOSMap> = Mutex::new(HashMap::new());
     }
     let mut mstates = MSTATES.lock().unwrap();
+    let mut os_map = OS.lock().unwrap();
 
     flush_machine_state_map(&mut mstates);
+    flush_machine_os_map(&mut os_map);
 
     let dsktp_pools = globals::DESKTOP_POOLS.lock().unwrap().clone();
     for dp in dsktp_pools {
@@ -107,7 +156,8 @@ pub fn machine_metric_update(
             continue;
         }
         if !mstates.contains_key(&dp.id) {
-            initialise_machine_map(&mut mstates, &dp.id);
+            initialise_machine_state_map(&mut mstates, &dp.id);
+            initialise_machine_os_map(&mut os_map, &dp.id);
         }
     }
 
@@ -133,11 +183,24 @@ pub fn machine_metric_update(
             continue;
         }
 
+        set_machine_os_metrics(&mut os_map, m);
+
         set_machine_state_metrics(&mut mstates, m);
     }
 
     prometheus_machine_states(&mstates);
+    prometheus_machine_os(&os_map);
     Ok(())
+}
+
+fn prometheus_machine_os(omap: &MachineOSMap) {
+    for (pool, osname) in omap.iter() {
+        for (os, count) in osname.iter() {
+            exporter::MACHINE_OS
+                .with_label_values(&[pool, os])
+                .set(*count);
+        }
+    }
 }
 
 fn prometheus_machine_states(mmap: &MachineStateMap) {
@@ -147,6 +210,44 @@ fn prometheus_machine_states(mmap: &MachineStateMap) {
                 .with_label_values(&[pool, state])
                 .set(*count);
         }
+    }
+}
+
+fn set_machine_os_metrics(omap: &mut MachineOSMap, m: &data::Machine) {
+    if let Some(os) = &m.operating_system {
+        match os.as_str() {
+            constants::OS_LINUX_CENTOS
+            | constants::OS_LINUX_OTHER
+            | constants::OS_LINUX_RHEL
+            | constants::OS_LINUX_SERVER_OTHER
+            | constants::OS_LINUX_SUSE
+            | constants::OS_LINUX_UBUNTU
+            | constants::OS_UNKNOWN
+            | constants::OS_WINDOWS_10
+            | constants::OS_WINDOWS_11
+            | constants::OS_WINDOWS_7
+            | constants::OS_WINDOWS_8
+            | constants::OS_WINDOWS_SERVER_2003
+            | constants::OS_WINDOWS_SERVER_2008
+            | constants::OS_WINDOWS_SERVER_2008_R2
+            | constants::OS_WINDOWS_SERVER_2012
+            | constants::OS_WINDOWS_SERVER_2012_R2
+            | constants::OS_WINDOWS_SERVER_2016_OR_ABOVE
+            | constants::OS_WINDOWS_VISTA
+            | constants::OS_WINDOWS_XP => {}
+            _ => {
+                warn!(
+                    "skipping unknown operating system {} for machine id {}",
+                    os, m.id
+                );
+            }
+        };
+
+        let om = omap
+            .entry(m.desktop_pool_id.to_string())
+            .or_insert_with(HashMap::new);
+        let lc_os = os.to_lowercase();
+        *om.entry(lc_os).or_insert(0) += 1;
     }
 }
 
