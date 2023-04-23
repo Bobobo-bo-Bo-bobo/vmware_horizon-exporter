@@ -22,7 +22,7 @@ lazy_static! {
             constants::AGENT_VERSIONS_NAME,
             constants::AGENT_VERSIONS_HELP
         ),
-        &["version"]
+        &["pool", "version"]
     )
     .unwrap();
     pub static ref SESSION_PROTOCOLS: IntGaugeVec = IntGaugeVec::new(

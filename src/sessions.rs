@@ -14,8 +14,8 @@ use std::sync::Mutex;
 // Map pool id -> state, count
 type SessionMap = HashMap<String, HashMap<String, i64>>;
 
-// Map agent, count
-type AgentVersionMap = HashMap<String, i64>;
+// Map pool id -> agent, count
+type AgentVersionMap = HashMap<String, HashMap<String, i64>>;
 
 // Map poold id -> session protocol, count
 type SessionProtocolMap = HashMap<String, HashMap<String, i64>>;
@@ -36,12 +36,14 @@ fn flush_session_type_map(m: &mut SessionTypeMap) {
 }
 
 fn flush_agent_version_map(m: &mut AgentVersionMap) {
-    for (k, v) in m.iter_mut() {
-        debug!(
-            "sessions.rs:flush_agent_version_map: setting m[{}] from {} to 0",
-            k, *v
-        );
-        *v = 0;
+    for (k1, v1) in m.iter_mut() {
+        for (k2, v2) in v1.iter_mut() {
+            debug!(
+                "sessions.rs:flush_agent_version_map: setting m[{}][{}] from {} to 0",
+                k1, k2, *v2
+            );
+            *v2 = 0;
+        }
     }
 }
 
@@ -177,7 +179,7 @@ pub fn session_metric_update(
             }
 
             set_desktop_pool_session_metrics(&mut pool_sessions, s, dp_id);
-            set_agent_version_metrics(&mut agent_versions, s);
+            set_agent_version_metrics(&mut agent_versions, s, dp_id);
             set_desktop_pool_session_protocol_metrics(&mut pool_protocols, s, dp_id);
             set_desktop_pool_session_type_metrics(&mut types, s, dp_id);
         } else {
@@ -186,18 +188,20 @@ pub fn session_metric_update(
     }
 
     prometheus_pool_sessions(&pool_sessions, &cfg.horizon_api);
-    prometheus_agent_versions(&agent_versions);
+    prometheus_agent_versions(&agent_versions, &cfg.horizon_api);
     prometheus_pool_session_protocols(&pool_protocols, &cfg.horizon_api);
     prometheus_pool_session_types(&types, &cfg.horizon_api);
 
     Ok(())
 }
 
-fn prometheus_agent_versions(amap: &AgentVersionMap) {
-    for (ver, count) in amap.iter() {
-        exporter::AGENT_VERSIONS
-            .with_label_values(&[ver])
-            .set(*count);
+fn prometheus_agent_versions(amap: &AgentVersionMap, cfg: &configuration::HorizonAPIConfig) {
+    for (pool, vcount) in amap.iter() {
+        for (ver, count) in vcount.iter() {
+            exporter::AGENT_VERSIONS
+                .with_label_values(&[&cfg.clone().user_defined_pool_uuid_resolve(pool), ver])
+                .set(*count);
+        }
     }
 }
 
@@ -280,9 +284,9 @@ fn set_desktop_pool_session_protocol_metrics(
     }
 }
 
-fn set_agent_version_metrics(amap: &mut AgentVersionMap, s: &data::Session) {
-    let avd = amap.entry(s.agent_version.clone()).or_insert(0);
-    *avd += 1;
+fn set_agent_version_metrics(amap: &mut AgentVersionMap, s: &data::Session, id: &str) {
+    let sm = amap.entry(id.to_string()).or_insert_with(HashMap::new);
+    *sm.entry(s.agent_version.clone()).or_insert(0) += 1;
 }
 
 fn set_desktop_pool_session_metrics(smap: &mut SessionMap, s: &data::Session, id: &str) {
