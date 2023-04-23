@@ -103,10 +103,10 @@ pub fn session_metric_update(
         if cfg.horizon_api.skip_pools_set.contains(&dp.id) {
             continue;
         }
-        if !cfg.horizon_api.only_pools_set.is_empty() {
-            if !cfg.horizon_api.only_pools_set.contains(&dp.id) {
-                continue;
-            }
+        if !cfg.horizon_api.only_pools_set.is_empty()
+            && !cfg.horizon_api.only_pools_set.contains(&dp.id)
+        {
+            continue;
         }
         if !pool_sessions.contains_key(&dp.id) {
             initialise_session_map(&mut pool_sessions, &dp.id);
@@ -131,11 +131,11 @@ pub fn session_metric_update(
                 continue;
             }
 
-            if !cfg.horizon_api.only_pools_set.is_empty() {
-                if !cfg.horizon_api.only_pools_set.contains(dp_id) {
-                    debug!("sessions.rs:session_metric_update: only_pools list is not empty and desktop pool id {} is not in only_pools list", dp_id);
-                    continue;
-                }
+            if !cfg.horizon_api.only_pools_set.is_empty()
+                && !cfg.horizon_api.only_pools_set.contains(dp_id)
+            {
+                debug!("sessions.rs:session_metric_update: only_pools list is not empty and desktop pool id {} is not in only_pools list", dp_id);
+                continue;
             }
 
             set_desktop_pool_session_metrics(&mut pool_sessions, s, dp_id);
