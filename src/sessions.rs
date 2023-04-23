@@ -156,7 +156,7 @@ pub fn session_metric_update(
 fn prometheus_agent_versions(amap: &AgentVersionMap) {
     for (ver, count) in amap.iter() {
         exporter::AGENT_VERSIONS
-            .with_label_values(&[&ver])
+            .with_label_values(&[ver])
             .set(*count);
     }
 }
@@ -165,7 +165,7 @@ fn prometheus_pool_sessions(pmap: &SessionMap) {
     for (pool, scount) in pmap.iter() {
         for (state, count) in scount.iter() {
             exporter::SESSIONS
-                .with_label_values(&[&pool, &state])
+                .with_label_values(&[pool, state])
                 .set(*count);
         }
     }
@@ -175,7 +175,7 @@ fn prometheus_pool_session_protocols(pmap: &SessionProtocolMap) {
     for (pool, scount) in pmap.iter() {
         for (proto, count) in scount.iter() {
             exporter::SESSION_PROTOCOLS
-                .with_label_values(&[&pool, &proto])
+                .with_label_values(&[pool, proto])
                 .set(*count);
         }
     }
