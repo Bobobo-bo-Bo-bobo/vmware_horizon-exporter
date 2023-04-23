@@ -15,10 +15,19 @@ lazy_static! {
         &["pool", "state"]
     )
     .unwrap();
+    pub static ref AGENT_VERSIONS: IntGaugeVec = IntGaugeVec::new(
+        Opts::new(
+            constants::AGENT_VERSIONS_NAME,
+            constants::AGENT_VERSIONS_HELP
+        ),
+        &["version"]
+    )
+    .unwrap();
 }
 
 pub fn register_metrics() {
     REGISTRY.register(Box::new(SESSIONS.clone())).unwrap();
+    REGISTRY.register(Box::new(AGENT_VERSIONS.clone())).unwrap();
 }
 
 fn metric_update(cfg: &configuration::Configuration, client: &mut reqwest::blocking::Client) {

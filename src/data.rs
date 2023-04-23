@@ -44,4 +44,5 @@ pub struct Session {
 #[derive(Deserialize, Clone, Debug)]
 pub struct DesktopPool {
     pub id: String,
+    pub enabled: bool,
 }

@@ -29,3 +29,5 @@ pub const REST_DESKTOP_POOLS: &str = "/rest/inventory/v1/desktop-pools";
 
 pub const SESSIONS_NAME: &str = "horizon_sessions";
 pub const SESSIONS_HELP: &str = "Horizon sessions";
+pub const AGENT_VERSIONS_NAME: &str = "horizon_agent_version_info";
+pub const AGENT_VERSIONS_HELP: &str = "Version of horizon agent";
