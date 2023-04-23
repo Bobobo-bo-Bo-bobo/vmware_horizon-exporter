@@ -92,7 +92,7 @@ pub fn get_sessions(
     token: &str,
 ) -> Result<Vec<data::Session>, Box<dyn Error>> {
     debug!(
-        "horizon.rs:get_sesions: requesting session list from {}{}",
+        "horizon.rs:get_sessions: requesting session list from {}{}",
         cfg.horizon_api.url,
         constants::REST_SESSIONS
     );
@@ -145,4 +145,33 @@ pub fn get_desktop_pools(
     );
 
     Ok(dplist)
+}
+
+pub fn get_machines(
+    cfg: &configuration::Configuration,
+    cli: &mut reqwest::blocking::Client,
+    token: &str,
+) -> Result<Vec<data::Machine>, Box<dyn Error>> {
+    debug!(
+        "horizon.rs:get_machines: requesting machine list from {}{}",
+        cfg.horizon_api.url,
+        constants::REST_MACHINES
+    );
+
+    let (st, mach) = http::get(
+        cli,
+        &format!("{}{}", cfg.horizon_api.url, constants::REST_MACHINES),
+        token,
+    )?;
+    debug!("horizon.rs:get_machines: received HTTP status={}", st);
+
+    if st != reqwest::StatusCode::OK {
+        // TODO: Decode JSON error string
+        bail!("logout failed, received {} instead of 200", st);
+    }
+
+    let mlist: Vec<data::Machine> = serde_json::from_str(mach.as_str())?;
+    debug!("horizon.rs:get_machines: {} machines in list", mlist.len());
+
+    Ok(mlist)
 }

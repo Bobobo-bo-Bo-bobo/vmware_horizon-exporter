@@ -47,3 +47,14 @@ pub struct DesktopPool {
     pub id: String,
     pub enabled: bool,
 }
+
+#[derive(Deserialize, Clone, Debug)]
+pub struct Machine {
+    pub id: String,
+    pub desktop_pool_id: String,
+    pub operating_system: Option<String>,
+    pub operating_system_architecture: Option<String>,
+    pub state: String,
+    #[serde(rename = "type")]
+    pub mtype: String,
+}

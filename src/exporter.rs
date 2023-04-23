@@ -3,6 +3,7 @@ use crate::constants;
 use crate::globals;
 use crate::horizon;
 use crate::http;
+use crate::machines;
 use crate::sessions;
 
 use lazy_static::lazy_static;
@@ -37,6 +38,14 @@ lazy_static! {
         &["pool", "type"]
     )
     .unwrap();
+    pub static ref MACHINE_STATES: IntGaugeVec = IntGaugeVec::new(
+        Opts::new(
+            constants::MACHINE_STATES_NAME,
+            constants::MACHINE_STATES_HELP
+        ),
+        &["pool", "state"],
+    )
+    .unwrap();
 }
 
 pub fn register_metrics() {
@@ -46,6 +55,7 @@ pub fn register_metrics() {
         .register(Box::new(SESSION_PROTOCOLS.clone()))
         .unwrap();
     REGISTRY.register(Box::new(SESSION_TYPES.clone())).unwrap();
+    REGISTRY.register(Box::new(MACHINE_STATES.clone())).unwrap();
 }
 
 fn metric_update(cfg: &configuration::Configuration, client: &mut reqwest::blocking::Client) {
@@ -73,6 +83,10 @@ fn metric_update(cfg: &configuration::Configuration, client: &mut reqwest::block
 
     if let Err(e) = sessions::session_metric_update(cfg, client, &tokens.access_token) {
         error!("session metric update failed: {}", e);
+    }
+
+    if let Err(e) = machines::machine_metric_update(cfg, client, &tokens.access_token) {
+        error!("machine metric update failed: {}", e);
     }
 
     debug!("exporter.rs:metric_update: logout from horizon");

@@ -9,6 +9,7 @@ mod exporter;
 mod globals;
 mod horizon;
 mod http;
+mod machines;
 mod sessions;
 mod usage;
 
