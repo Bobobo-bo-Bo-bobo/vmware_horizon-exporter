@@ -31,6 +31,11 @@ lazy_static! {
         &["pool", "protocol"]
     )
     .unwrap();
+    pub static ref SESSION_TYPES: IntGaugeVec = IntGaugeVec::new(
+        Opts::new(constants::SESSION_TYPES_NAME, constants::SESSION_TYPES_HELP),
+        &["pool", "type"]
+    )
+    .unwrap();
 }
 
 pub fn register_metrics() {
@@ -39,6 +44,7 @@ pub fn register_metrics() {
     REGISTRY
         .register(Box::new(SESSION_PROTOCOLS.clone()))
         .unwrap();
+    REGISTRY.register(Box::new(SESSION_TYPES.clone())).unwrap();
 }
 
 fn metric_update(cfg: &configuration::Configuration, client: &mut reqwest::blocking::Client) {

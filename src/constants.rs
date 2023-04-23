@@ -22,6 +22,22 @@ pub const LC_SESSION_CONNECTED: &str = "connected";
 pub const LC_SESSION_DISCONNECTED: &str = "disconnected";
 pub const LC_SESSION_PENDING: &str = "pending";
 
+pub const PROTOCOL_PCOIP: &str = "PCOIP";
+pub const PROTOCOL_RDP: &str = "RDP";
+pub const PROTOCOL_BLAST: &str = "BLAST";
+pub const PROTOCOL_CONSOLE: &str = "CONSOLE";
+pub const PROTOCOL_UNKNOWN: &str = "UNKNOWN";
+pub const LC_PROTOCOL_PCOIP: &str = "pcoip";
+pub const LC_PROTOCOL_RDP: &str = "rdp";
+pub const LC_PROTOCOL_BLAST: &str = "blast";
+pub const LC_PROTOCOL_CONSOLE: &str = "console";
+pub const LC_PROTOCOL_UNKNOWN: &str = "unknown";
+
+pub const TYPE_APPLICATION: &str = "APPLICATION";
+pub const TYPE_DESKTOP: &str = "DESKTOP";
+pub const LC_TYPE_APPLICATION: &str = "application";
+pub const LC_TYPE_DESKTOP: &str = "desktop";
+
 pub const REST_LOGIN: &str = "/rest/login";
 pub const REST_LOGOUT: &str = "/rest/logout";
 pub const REST_SESSIONS: &str = "/rest/inventory/v1/sessions";
@@ -32,4 +48,6 @@ pub const SESSIONS_HELP: &str = "Horizon sessions";
 pub const AGENT_VERSIONS_NAME: &str = "horizon_agent_version_info";
 pub const AGENT_VERSIONS_HELP: &str = "Version of horizon agent";
 pub const SESSION_PROTOCOLS_NAME: &str = "horizon_session_protocols";
-pub const SESSION_PROTOCOLS_HELP: &str = "Horizon session protocolss";
+pub const SESSION_PROTOCOLS_HELP: &str = "Horizon session protocols";
+pub const SESSION_TYPES_NAME: &str = "horizon_session_types";
+pub const SESSION_TYPES_HELP: &str = "Horizon session type";
