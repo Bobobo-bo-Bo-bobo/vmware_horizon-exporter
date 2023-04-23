@@ -136,6 +136,13 @@ pub const LC_OS_WINDOWS_SERVER_2016_OR_ABOVE: &str = "windows_server_2016_or_abo
 pub const LC_OS_WINDOWS_VISTA: &str = "windows_vista";
 pub const LC_OS_WINDOWS_XP: &str = "windows_xp";
 
+pub const ARCH_BIT_64: &str = "BIT_64";
+pub const ARCH_BIT_32: &str = "BIT_32";
+pub const ARCH_UNKNOWN: &str = "UNKNOWN";
+pub const LC_ARCH_BIT_64: &str = "bit_64";
+pub const LC_ARCH_BIT_32: &str = "bit_32";
+pub const LC_ARCH_UNKNOWN: &str = "unknown";
+
 pub const REST_LOGIN: &str = "/rest/login";
 pub const REST_LOGOUT: &str = "/rest/logout";
 pub const REST_SESSIONS: &str = "/rest/inventory/v1/sessions";
@@ -154,3 +161,6 @@ pub const MACHINE_STATES_NAME: &str = "horizon_machine_states";
 pub const MACHINE_STATES_HELP: &str = "State of horizon virtual machine";
 pub const MACHINE_OS_NAME: &str = "horizon_machine_os_info";
 pub const MACHINE_OS_HELP: &str = "Operating system on virtual machines";
+pub const MACHINE_ARCH_NAME: &str = "horizon_machine_os_arch_info";
+pub const MACHINE_ARCH_HELP: &str = "Architecture of operating system on virtual machine";
+

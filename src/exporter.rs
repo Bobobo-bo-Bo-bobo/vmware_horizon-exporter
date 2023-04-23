@@ -51,6 +51,11 @@ lazy_static! {
         &["pool", "operating_system"]
     )
     .unwrap();
+    pub static ref MACHINE_ARCH: IntGaugeVec = IntGaugeVec::new(
+        Opts::new(constants::MACHINE_ARCH_NAME, constants::MACHINE_ARCH_HELP),
+        &["pool", "architecture"]
+    )
+    .unwrap();
 }
 
 pub fn register_metrics() {
@@ -62,6 +67,7 @@ pub fn register_metrics() {
     REGISTRY.register(Box::new(SESSION_TYPES.clone())).unwrap();
     REGISTRY.register(Box::new(MACHINE_STATES.clone())).unwrap();
     REGISTRY.register(Box::new(MACHINE_OS.clone())).unwrap();
+    REGISTRY.register(Box::new(MACHINE_ARCH.clone())).unwrap();
 }
 
 fn metric_update(cfg: &configuration::Configuration, client: &mut reqwest::blocking::Client) {

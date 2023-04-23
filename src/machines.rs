@@ -17,6 +17,21 @@ type MachineStateMap = HashMap<String, HashMap<String, i64>>;
 // Map poolid -> os, count
 type MachineOSMap = HashMap<String, HashMap<String, i64>>;
 
+// Map poolid -> arch, count
+type MachineArchMap = HashMap<String, HashMap<String, i64>>;
+
+fn flush_machine_arch_map(m: &mut MachineOSMap) {
+    for (k1, v1) in m.iter_mut() {
+        for (k2, v2) in v1.iter_mut() {
+            debug!(
+                "machines.rs:flush_machine_arch_map: setting m[{}][{}] from {} to 0",
+                k1, k2, *v2
+            );
+            *v2 = 0;
+        }
+    }
+}
+
 fn flush_machine_os_map(m: &mut MachineOSMap) {
     for (k1, v1) in m.iter_mut() {
         for (k2, v2) in v1.iter_mut() {
@@ -41,9 +56,23 @@ fn flush_machine_state_map(m: &mut MachineStateMap) {
     }
 }
 
+fn initialise_machine_arch_map(m: &mut MachineOSMap, p: &str) {
+    debug!(
+        "machines.rs:initialise_machine_arch_map: initialising MachineArchMap for {}",
+        p
+    );
+
+    let pm = m
+        .entry(p.to_string())
+        .or_insert_with(HashMap::<String, i64>::new);
+    pm.insert(constants::LC_ARCH_BIT_64.to_string(), 0);
+    pm.insert(constants::LC_ARCH_BIT_32.to_string(), 0);
+    pm.insert(constants::LC_ARCH_UNKNOWN.to_string(), 0);
+}
+
 fn initialise_machine_os_map(m: &mut MachineOSMap, p: &str) {
     debug!(
-        "machines.rs:initialise_machine_map: initialising MachineStateMap for {}",
+        "machines.rs:initialise_machine_os_map: initialising MachineOSMap for {}",
         p
     );
 
@@ -138,12 +167,15 @@ pub fn machine_metric_update(
     lazy_static! {
         static ref MSTATES: Mutex<MachineStateMap> = Mutex::new(HashMap::new());
         static ref OS: Mutex<MachineOSMap> = Mutex::new(HashMap::new());
+        static ref ARCH: Mutex<MachineArchMap> = Mutex::new(HashMap::new());
     }
     let mut mstates = MSTATES.lock().unwrap();
     let mut os_map = OS.lock().unwrap();
+    let mut arch_map = ARCH.lock().unwrap();
 
     flush_machine_state_map(&mut mstates);
     flush_machine_os_map(&mut os_map);
+    flush_machine_arch_map(&mut arch_map);
 
     let dsktp_pools = globals::DESKTOP_POOLS.lock().unwrap().clone();
     for dp in dsktp_pools {
@@ -158,6 +190,7 @@ pub fn machine_metric_update(
         if !mstates.contains_key(&dp.id) {
             initialise_machine_state_map(&mut mstates, &dp.id);
             initialise_machine_os_map(&mut os_map, &dp.id);
+            initialise_machine_arch_map(&mut arch_map, &dp.id);
         }
     }
 
@@ -183,14 +216,25 @@ pub fn machine_metric_update(
             continue;
         }
 
-        set_machine_os_metrics(&mut os_map, m);
-
         set_machine_state_metrics(&mut mstates, m);
+        set_machine_os_metrics(&mut os_map, m);
+        set_machine_arch_metrics(&mut arch_map, m);
     }
 
     prometheus_machine_states(&mstates);
     prometheus_machine_os(&os_map);
+    prometheus_machine_arch(&arch_map);
     Ok(())
+}
+
+fn prometheus_machine_arch(amap: &MachineArchMap) {
+    for (pool, archname) in amap.iter() {
+        for (arch, count) in archname.iter() {
+            exporter::MACHINE_ARCH
+                .with_label_values(&[pool, arch])
+                .set(*count);
+        }
+    }
 }
 
 fn prometheus_machine_os(omap: &MachineOSMap) {
@@ -210,6 +254,20 @@ fn prometheus_machine_states(mmap: &MachineStateMap) {
                 .with_label_values(&[pool, state])
                 .set(*count);
         }
+    }
+}
+
+fn set_machine_arch_metrics(amap: &mut MachineArchMap, m: &data::Machine) {
+    if let Some(arch) = &m.operating_system_architecture {
+        match arch.as_str() {
+            constants::ARCH_BIT_64 | constants::ARCH_BIT_32 | constants::ARCH_UNKNOWN => {},
+            _ => {
+                warn!("skipping unknown architecture {} for machine id {}", arch, m.id);
+            }
+        };
+        let am = amap.entry(m.desktop_pool_id.to_string()).or_insert_with(HashMap::new);
+        let lc_arch = arch.to_lowercase();
+        *am.entry(lc_arch).or_insert(0) += 1;
     }
 }
 
