@@ -31,3 +31,5 @@ pub const SESSIONS_NAME: &str = "horizon_sessions";
 pub const SESSIONS_HELP: &str = "Horizon sessions";
 pub const AGENT_VERSIONS_NAME: &str = "horizon_agent_version_info";
 pub const AGENT_VERSIONS_HELP: &str = "Version of horizon agent";
+pub const SESSION_PROTOCOLS_NAME: &str = "horizon_session_protocols";
+pub const SESSION_PROTOCOLS_HELP: &str = "Horizon session protocolss";

@@ -23,11 +23,22 @@ lazy_static! {
         &["version"]
     )
     .unwrap();
+    pub static ref SESSION_PROTOCOLS: IntGaugeVec = IntGaugeVec::new(
+        Opts::new(
+            constants::SESSION_PROTOCOLS_NAME,
+            constants::SESSION_PROTOCOLS_HELP
+        ),
+        &["pool", "protocol"]
+    )
+    .unwrap();
 }
 
 pub fn register_metrics() {
     REGISTRY.register(Box::new(SESSIONS.clone())).unwrap();
     REGISTRY.register(Box::new(AGENT_VERSIONS.clone())).unwrap();
+    REGISTRY
+        .register(Box::new(SESSION_PROTOCOLS.clone()))
+        .unwrap();
 }
 
 fn metric_update(cfg: &configuration::Configuration, client: &mut reqwest::blocking::Client) {

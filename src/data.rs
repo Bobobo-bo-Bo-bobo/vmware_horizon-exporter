@@ -39,6 +39,7 @@ pub struct Session {
     pub agent_version: String,
     pub session_type: String,
     pub session_state: String,
+    pub session_protocol: Option<String>,
 }
 
 #[derive(Deserialize, Clone, Debug)]

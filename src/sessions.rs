@@ -16,6 +16,9 @@ type SessionMap = HashMap<String, HashMap<String, i64>>;
 // Map agent, count
 type AgentVersionMap = HashMap<String, i64>;
 
+// Map poold id -> session protocol, count
+type SessionProtocolMap = HashMap<String, HashMap<String, i64>>;
+
 fn flush_agent_version_map(m: &mut AgentVersionMap) {
     for (k, v) in m.iter_mut() {
         debug!(
@@ -24,6 +27,28 @@ fn flush_agent_version_map(m: &mut AgentVersionMap) {
         );
         *v = 0;
     }
+}
+
+fn flush_session_protocol_map(m: &mut SessionProtocolMap) {
+    for (k1, v1) in m.iter_mut() {
+        for (k2, v2) in v1.iter_mut() {
+            debug!(
+                "sessions.rs:flush_session_protocol_map: setting m[{}][{}] from {} to 0",
+                k1, k2, *v2
+            );
+            *v2 = 0;
+        }
+    }
+}
+
+fn initialise_session_protocol_map(m: &mut SessionProtocolMap, p: &str) {
+    debug!(
+        "sessions.rs:initialise_session_map: initialising SessionProtocolMap for {}",
+        p
+    );
+
+    m.entry(p.to_string())
+        .or_insert_with(HashMap::<String, i64>::new);
 }
 
 fn flush_session_map(m: &mut SessionMap) {
@@ -60,13 +85,16 @@ pub fn session_metric_update(
     lazy_static! {
         static ref POOL_SESSIONS: Mutex<SessionMap> = Mutex::new(HashMap::new());
         static ref AGENT_VERSIONS: Mutex<AgentVersionMap> = Mutex::new(HashMap::new());
+        static ref POOL_PROTOCOLS: Mutex<SessionProtocolMap> = Mutex::new(HashMap::new());
     }
     let mut pool_sessions = POOL_SESSIONS.lock().unwrap();
     let mut agent_versions = AGENT_VERSIONS.lock().unwrap();
+    let mut pool_protocols = POOL_PROTOCOLS.lock().unwrap();
 
     // flush existing counters to prevent reporting of stale data
     flush_session_map(&mut pool_sessions);
     flush_agent_version_map(&mut agent_versions);
+    flush_session_protocol_map(&mut pool_protocols);
 
     debug!("sessions.rs:session_metric_update: getting list of desktop pools");
     let dsktp_pools = horizon::get_desktop_pools(cfg, client, token)?;
@@ -82,6 +110,7 @@ pub fn session_metric_update(
         }
         if !pool_sessions.contains_key(&dp.id) {
             initialise_session_map(&mut pool_sessions, &dp.id);
+            initialise_session_protocol_map(&mut pool_protocols, &dp.id);
         }
     }
 
@@ -111,6 +140,7 @@ pub fn session_metric_update(
 
             set_desktop_pool_session_metrics(&mut pool_sessions, s, dp_id);
             set_agent_version_metrics(&mut agent_versions, s);
+            set_desktop_pool_session_protocol_metrics(&mut pool_protocols, s, dp_id);
         } else {
             warn!("BUG: session id {} is not a desktop session", s.id);
         }
@@ -118,6 +148,8 @@ pub fn session_metric_update(
 
     prometheus_pool_sessions(&pool_sessions);
     prometheus_agent_versions(&agent_versions);
+    prometheus_pool_session_protocols(&pool_protocols);
+
     Ok(())
 }
 
@@ -136,6 +168,29 @@ fn prometheus_pool_sessions(pmap: &SessionMap) {
                 .with_label_values(&[&pool, &state])
                 .set(*count);
         }
+    }
+}
+
+fn prometheus_pool_session_protocols(pmap: &SessionProtocolMap) {
+    for (pool, scount) in pmap.iter() {
+        for (proto, count) in scount.iter() {
+            exporter::SESSION_PROTOCOLS
+                .with_label_values(&[&pool, &proto])
+                .set(*count);
+        }
+    }
+}
+
+fn set_desktop_pool_session_protocol_metrics(
+    smap: &mut SessionProtocolMap,
+    s: &data::Session,
+    id: &str,
+) {
+    if let Some(v) = s.session_protocol.clone() {
+        let ps = smap
+            .entry(id.to_string())
+            .or_insert_with(HashMap::<String, i64>::new);
+        *ps.entry(v).or_insert(0) += 1;
     }
 }
 
