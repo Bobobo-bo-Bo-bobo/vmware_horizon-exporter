@@ -1,0 +1,86 @@
+= vmware_horizon-exporter - Export metrics from VMWare Horizon
+:source-highlighter: rouge
+:rouge-style: gruvbox
+:stylesheet: asciidoc.css
+:toc: left
+
+== Preface
+
+https://www.vmware.com/products/horizon.html[VMWare Horizon^] is a widely used VDI solution in an enterprise environment.
+To provide reporting information, this tool exports several metrics from the VMWare Horizon REST API for https://prometheus.io[Prometheus^]
+
+== Repositories
+
+* Primary development repository: https://git.ypbind.de/cgit/vmware_horizon-exporter/
+* Backup repository: https://github.com/Bobobo-bo-Bo-bobo/vmware_horizon-exporter
+
+== Build requirements
+
+As a Rust program, a current stable Rust build environment is required. Additionally `pkg-config` and the development file of `libssl` are required to build the `reqwest` crate.
+
+== Usage
+=== VMWare Horizon permissions
+
+The user account used to fetch the data require some read-only access:
+
+[cols="<,<",options="header",]
+|===
+|_Permission_ |_Note_
+|`FEDERATED_SESSIONS_VIEW` |Access to session information
+|`GLOBAL_CONFIG_VIEW` |General access to configuration information
+|`MACHINE_VIEW` |Access to machine and session information
+|`POOL_VIEW` |Access to pool information
+|===
+
+=== Command line options
+
+[cols="<,<",options="header",]
+|===
+|_Option_ |_Dwscription_
+|`-D` / `--debug` |Enable debug output
+|`-V` / `--version` |Show version information
+|`-Q` / `--quiet` |Only log warning and error messages
+|`-c <cfg>` / `--config=<cfg>` |Path to configuration file
+|`-h` / `--help` |Show help text
+|`-l <addr>` / `--listen=<addr>` |Address to listen for metric scrapes. Default: `localhost:9133`
+|===
+
+=== Configuration file
+The configuration file is expected in the YAML format, e.g.:
+
+[source,yaml]
+----
+---
+horizon_api:
+    url: 'https://vmware.hori.zon'
+    insecure_ssl: false
+    user: 'exporter_user'
+    domain: 'ad_domain'
+    password: 'ItsSoFluffyImGonnaDIE!'
+    only_pools:
+        - 'only_pool_1_uuid'
+        - 'only_pool_2_uuid'
+    skip_pools:
+        - 'exclude_this_pool_uuid'
+    pool_uuid_map:
+        - pool_1_uuid: 'My pool number 1'
+----
+
+The `horizon_api` dictionary contains information about accessing the Horizon REST API:
+
+[width="100%",cols="<34%,<41%,<25%",options="header",]
+|===
+|_Option_ |_Dwscription_ |_Mandatory_ 
+|`url` |URL of the Horizon server |`yes`
+|`insecure_ssl` |Disable SSL certificate verification |`no`
+|`user` |Username for authentication |`yes`
+|`domain` |AD-Domain of the user for authentication |`yes`
+|`password` |Password of the user used for authentication |`yes`
+|`only_pools` |Limit metrics to list of pool *UUIDs* |`no`
+|`skip_pools` |Report usage for pools _except_ for this list of pool *UUIDs* |`no`
+|`pool_uuid_map` |Dictionary to map pool UUIDs to a name |`no`
+|===
+
+NOTE: Pools are referenced by their UUIDs because there is not other unique way to identify pools. Name and display names are not unique.
+
+NOTE: `pool_uuid_map` replaces the pool UUIDs label in the metric output `pool=...` with a user generated string.
