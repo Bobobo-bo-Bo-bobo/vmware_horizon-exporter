@@ -32,6 +32,9 @@ The user account used to fetch the data require some read-only access:
 |`POOL_VIEW` |Access to pool information
 |===
 
+=== Using a proxy server
+The environment variable `https_proxy` or `HTTPS_PROXY` can be used to define a proxy server to use.
+
 === Command line options
 
 [cols="<,<",options="header",]
