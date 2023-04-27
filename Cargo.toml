@@ -1,5 +1,5 @@
 [package]
-name = "vmware_horizon-exporter"
+name = "vmware-horizon-exporter"
 version = "1.0.1"
 edition = "2021"
 
