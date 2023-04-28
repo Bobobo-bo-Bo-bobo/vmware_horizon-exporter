@@ -3,8 +3,8 @@ Description=Export VMWare Horizon metrics to Prometheus
 After=network.target auditd.service sssd.service
 
 [Service]
-EnvironmentFile=-/etc/default/vmware-horizon-exporter
-ExecStart=/usr/sbin/vmware-horizon-exporter $OPTIONS
+EnvironmentFile=-/etc/default/vmware_horizon-exporter
+ExecStart=/usr/sbin/vmware_horizon-exporter $OPTIONS
 Restart=on-failure
 User=prometheus
 Group=prometheus

@@ -1,5 +1,5 @@
 .PHONY: all build strip install clean
-BINARY=vmware-horizon-exporter
+BINARY=vmware_horizon-exporter
 
 all: build strip install
 
