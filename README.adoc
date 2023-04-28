@@ -11,8 +11,8 @@ To provide reporting information, this tool exports several metrics from the VMW
 
 == Repositories
 
-* Primary development repository: https://git.ypbind.de/cgit/vmware-horizon-exporter/
-* Backup repository: https://github.com/Bobobo-bo-Bo-bobo/vmware-horizon-exporter
+* Primary development repository: https://git.ypbind.de/cgit/vmware_horizon-exporter/
+* Backup repository: https://github.com/Bobobo-bo-Bo-bobo/vmware_horizon-exporter
 
 == Build requirements
 
