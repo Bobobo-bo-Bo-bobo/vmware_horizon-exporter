@@ -39,8 +39,11 @@ pub fn login(
     );
 
     if st != reqwest::StatusCode::OK {
-        // TODO: Decode JSON error string
-        bail!("login failed, received {} instead of 200", st);
+        bail!(
+            "login failed, received {} instead of 200: {}",
+            st,
+            format_error_message(&lg_str)
+        );
     }
 
     let result = serde_json::from_str(lg_str.as_str())?;
@@ -79,8 +82,11 @@ pub fn logout(
     );
 
     if st != reqwest::StatusCode::OK {
-        // TODO: Decode JSON error string
-        bail!("logout failed, received {} instead of 200", st);
+        bail!(
+            "logout failed, received {} instead of 200: {}",
+            st,
+            format_error_message(&lg_str)
+        );
     }
 
     Ok(())
@@ -105,8 +111,11 @@ pub fn get_sessions(
     debug!("horizon.rs:get_sessions: received HTTP status={}", st);
 
     if st != reqwest::StatusCode::OK {
-        // TODO: Decode JSON error string
-        bail!("logout failed, received {} instead of 200", st);
+        bail!(
+            "logout failed, received {} instead of 200: {}",
+            st,
+            format_error_message(&sess)
+        );
     }
 
     let slist: Vec<data::Session> = serde_json::from_str(sess.as_str())?;
@@ -134,8 +143,11 @@ pub fn get_desktop_pools(
     debug!("horizon.rs:get_desktop_pools: received HTTP status={}", st);
 
     if st != reqwest::StatusCode::OK {
-        // TODO: Decode JSON error string
-        bail!("logout failed, received {} instead of 200", st);
+        bail!(
+            "logout failed, received {} instead of 200: {}",
+            st,
+            format_error_message(&dpl)
+        );
     }
 
     let dplist: Vec<data::DesktopPool> = serde_json::from_str(dpl.as_str())?;
@@ -166,12 +178,31 @@ pub fn get_machines(
     debug!("horizon.rs:get_machines: received HTTP status={}", st);
 
     if st != reqwest::StatusCode::OK {
-        // TODO: Decode JSON error string
-        bail!("logout failed, received {} instead of 200", st);
+        bail!(
+            "logout failed, received {} instead of 200 - {}",
+            st,
+            format_error_message(&mach)
+        );
     }
 
     let mlist: Vec<data::Machine> = serde_json::from_str(mach.as_str())?;
     debug!("horizon.rs:get_machines: {} machines in list", mlist.len());
 
     Ok(mlist)
+}
+
+fn format_error_message(e: &str) -> String {
+    let err: data::ErrorResponse = match serde_json::from_str(e) {
+        Ok(v) => v,
+        Err(e) => {
+            return format!("Can't decode response as JSON - {}", e);
+        }
+    };
+    let mut msg_list: Vec<String> = Vec::new();
+
+    for em in err.errors.iter() {
+        msg_list.push(format!("{}: {}", em.error_key, em.error_message));
+    }
+
+    msg_list.join(", ")
 }
