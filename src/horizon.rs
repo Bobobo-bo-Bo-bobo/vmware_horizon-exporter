@@ -124,6 +124,70 @@ pub fn get_sessions(
     Ok(slist)
 }
 
+pub fn get_session_for_machine_id(
+    cfg: &configuration::Configuration,
+    cli: &mut reqwest::blocking::Client,
+    token: &str,
+    machine_id: &str,
+) -> Result<Option<data::Session>, Box<dyn Error>> {
+    let mut filter = data::FilterPayload {
+        filter_type: "Equals".to_string(),
+        filters: Vec::new(),
+    };
+    let mid_filter = data::FilterRequest {
+        comparison: "Equals".to_string(),
+        name: "machine_id".to_string(),
+        value: machine_id.to_string(),
+    };
+    filter.filters.push(mid_filter);
+    let filter_str = serde_json::to_string(&filter)?;
+    let encoded_filter = urlencoding::encode(&filter_str);
+
+    debug!(
+        "horizon.rs:get_session_for_machine_id: requesting session list from {}{}?filter={}",
+        cfg.horizon_api.url,
+        constants::REST_SESSIONS,
+        encoded_filter,
+    );
+
+    let (st, sess) = http::get(
+        cli,
+        &format!(
+            "{}{}?filter={}",
+            cfg.horizon_api.url,
+            constants::REST_SESSIONS,
+            encoded_filter
+        ),
+        token,
+    )?;
+    debug!(
+        "horizon.rs:get_session_for_machine_id: received HTTP status={}",
+        st
+    );
+
+    if st != reqwest::StatusCode::OK && st != reqwest::StatusCode::NOT_FOUND {
+        bail!(
+            "logout failed, received {} instead of 200 or 404: {}",
+            st,
+            format_error_message(&sess)
+        );
+    }
+
+    if st == reqwest::StatusCode::NOT_FOUND {
+        return Ok(None);
+    }
+
+    let slist: Vec<data::Session> = serde_json::from_str(sess.as_str())?;
+    debug!(
+        "horizon.rs:get_session_for_machine_id: {} sessions in list",
+        slist.len()
+    );
+    if slist.is_empty() {
+        return Ok(None);
+    }
+    Ok(Some(slist[0].clone()))
+}
+
 pub fn get_desktop_pools(
     cfg: &configuration::Configuration,
     cli: &mut reqwest::blocking::Client,

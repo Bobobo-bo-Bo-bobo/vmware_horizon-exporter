@@ -216,7 +216,7 @@ pub fn machine_metric_update(
             continue;
         }
 
-        set_machine_state_metrics(&mut mstates, m);
+        set_machine_state_metrics(cfg, client, token, &mut mstates, m)?;
         set_machine_os_metrics(&mut os_map, m);
         set_machine_arch_metrics(&mut arch_map, m);
     }
@@ -314,7 +314,13 @@ fn set_machine_os_metrics(omap: &mut MachineOSMap, m: &data::Machine) {
     }
 }
 
-fn set_machine_state_metrics(mmap: &mut MachineStateMap, m: &data::Machine) {
+fn set_machine_state_metrics(
+    cfg: &configuration::Configuration,
+    cli: &mut reqwest::blocking::Client,
+    token: &str,
+    mmap: &mut MachineStateMap,
+    m: &data::Machine,
+) -> Result<(), Box<dyn Error>> {
     match m.state.as_str() {
         constants::MSTATE_AGENT_CONFIG_ERROR
         | constants::MSTATE_AGENT_DRAIN_MODE
@@ -350,12 +356,47 @@ fn set_machine_state_metrics(mmap: &mut MachineStateMap, m: &data::Machine) {
         }
     };
 
+    let mut m_state = m.state.clone();
+    let thorough = cfg.horizon_api.thorough.unwrap_or_default();
+    if thorough
+        && (m.state == constants::MSTATE_UNASSIGNED_USER_CONNECTED
+            || m.state == constants::MSTATE_UNASSIGNED_USER_DISCONNECTED)
+    {
+        debug!("machines.rs:set_machine_state_metrics: thorough flag is set and machine state is {}, looking up session information for machine id {}", m.state, m.id);
+
+        if let Some(s) = horizon::get_session_for_machine_id(cfg, cli, token, &m.id)? {
+            if let Some(user_ids) = &m.user_ids {
+                debug!("machines.rs:set_machine_state_metrics: assigned user SIDs for machine id {}: {:?}, session user SID is {}", m.id, user_ids, s.user_id);
+                if user_ids.contains(&s.user_id) {
+                    m_state = if m.state == constants::MSTATE_UNASSIGNED_USER_CONNECTED {
+                        debug!(
+                            "machines.rs: changing state for machine id {} from {} to {}",
+                            m.id,
+                            constants::MSTATE_UNASSIGNED_USER_CONNECTED,
+                            constants::MSTATE_CONNECTED
+                        );
+                        constants::MSTATE_CONNECTED.to_string()
+                    } else if m.state == constants::MSTATE_UNASSIGNED_USER_DISCONNECTED {
+                        debug!(
+                            "machines.rs: changing state for machine id {} from {} to {}",
+                            m.id,
+                            constants::MSTATE_UNASSIGNED_USER_DISCONNECTED,
+                            constants::MSTATE_DISCONNECTED
+                        );
+                        constants::MSTATE_DISCONNECTED.to_string()
+                    } else {
+                        m_state
+                    }
+                }
+            }
+        }
+    }
+
     let ms = mmap
         .entry(m.desktop_pool_id.to_string())
         .or_insert_with(HashMap::new);
-    let lc_state = m.state.to_lowercase();
+    let lc_state = m_state.to_lowercase();
     *ms.entry(lc_state).or_insert(0) += 1;
-}
 
-/*
-*/
+    Ok(())
+}

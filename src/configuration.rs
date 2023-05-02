@@ -21,6 +21,7 @@ pub struct HorizonAPIConfig {
     pub only_pools: Option<Vec<String>>,
     pub skip_pools: Option<Vec<String>>,
     pub pool_uuid_map: Option<HashMap<String, String>>,
+    pub thorough: Option<bool>,
     #[serde(skip)]
     pub only_pools_set: HashSet<String>,
     #[serde(skip)]

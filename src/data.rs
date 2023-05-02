@@ -57,4 +57,20 @@ pub struct Machine {
     pub state: String,
     #[serde(rename = "type")]
     pub mtype: String,
+    pub user_ids: Option<Vec<String>>,
+}
+
+#[derive(Serialize, Clone, Debug)]
+pub struct FilterPayload {
+    #[serde(rename = "type")]
+    pub filter_type: String,
+    pub filters: Vec<FilterRequest>,
+}
+
+#[derive(Serialize, Clone, Debug)]
+pub struct FilterRequest {
+    #[serde(rename = "type")]
+    pub comparison: String,
+    pub name: String,
+    pub value: String,
 }
