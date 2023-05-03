@@ -67,7 +67,6 @@ horizon_api:
         - 'exclude_this_pool_uuid'
     pool_uuid_map:
         - pool_1_uuid: 'My pool number 1'
-    thorough: true
 ----
 
 The `horizon_api` dictionary contains information about accessing the Horizon REST API:
@@ -83,18 +82,9 @@ The `horizon_api` dictionary contains information about accessing the Horizon RE
 |`only_pools` |Limit metrics to list of pool *UUIDs* |`no`
 |`skip_pools` |Report usage for pools _except_ for this list of pool *UUIDs* |`no`
 |`pool_uuid_map` |Dictionary to map pool UUIDs to a name |`no`
-|`thorough` |Thorough check (see below)|`no`
 |===
 
 NOTE: Pools are referenced by their UUIDs because there is not other unique way to identify pools. Name and display names are not unique.
 
 NOTE: `pool_uuid_map` replaces the pool UUIDs label in the metric output `pool=...` with a user generated string.
-
-[NOTE]
-====
-API for machine information report `UNASSIGNED_USER_CONNECTED` / `UNASSIGNED_USER_DISCONNECTED` for dedicated pools/machines if the username reported by the agent and the username fetched from active directory does not match.
-At the moment (VMWare Horizon 8.9.0 build - 21507980) this is a *case sensitive* check, even the API itself returns users as SIDs instead of names.
-The webinterface looks at the SIDs for both states and compare the SIDs and display the correct state (`CONNECTED` / `DISCONNECTED`) in the "Machine Status" table.
-Setting `thorough` to `true` will also correct the state if the *SID* list reported for the machine and the *SID* of the current session match at the cost of a additional lookup for the session associated with the machine (and a potential race condition).
-====
 

@@ -357,12 +357,10 @@ fn set_machine_state_metrics(
     };
 
     let mut m_state = m.state.clone();
-    let thorough = cfg.horizon_api.thorough.unwrap_or_default();
-    if thorough
-        && (m.state == constants::MSTATE_UNASSIGNED_USER_CONNECTED
-            || m.state == constants::MSTATE_UNASSIGNED_USER_DISCONNECTED)
+    if m.state == constants::MSTATE_UNASSIGNED_USER_CONNECTED
+        || m.state == constants::MSTATE_UNASSIGNED_USER_DISCONNECTED
     {
-        debug!("machines.rs:set_machine_state_metrics: thorough flag is set and machine state is {}, looking up session information for machine id {}", m.state, m.id);
+        debug!("machines.rs:set_machine_state_metrics: machine state is {}, looking up session information for machine id {}", m.state, m.id);
 
         if let Some(s) = horizon::get_session_for_machine_id(cfg, cli, token, &m.id)? {
             if let Some(user_ids) = &m.user_ids {
