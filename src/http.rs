@@ -68,7 +68,7 @@ pub fn get(
     url: &str,
     token: &str,
 ) -> Result<(reqwest::StatusCode, String), Box<dyn Error>> {
-    debug!("GET {}", &url);
+    debug!("http.rs:get: GET {}", &url);
 
     let response = http_client.get(url).bearer_auth(token).send()?;
 
@@ -83,7 +83,7 @@ pub fn post(
     payload: &str,
     token: Option<&str>,
 ) -> Result<(reqwest::StatusCode, String), Box<dyn Error>> {
-    debug!("POST {}", &url);
+    debug!("http.rs:post: POST {}", &url);
 
     let response = match token {
         Some(t) => http_client
