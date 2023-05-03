@@ -131,7 +131,7 @@ pub fn get_session_for_machine_id(
     machine_id: &str,
 ) -> Result<Option<data::Session>, Box<dyn Error>> {
     let mut filter = data::FilterPayload {
-        filter_type: "Equals".to_string(),
+        filter_type: "And".to_string(),
         filters: Vec::new(),
     };
     let mid_filter = data::FilterRequest {
