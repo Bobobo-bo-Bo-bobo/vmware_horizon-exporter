@@ -55,18 +55,20 @@ The configuration file is expected in the YAML format, e.g.:
 ----
 ---
 horizon_api:
-    url: 'https://vmware.hori.zon'
-    insecure_ssl: false
-    user: 'exporter_user'
+    ca_file: /path/to/ca.pem
     domain: 'ad_domain'
-    password: 'ItsSoFluffyImGonnaDIE!'
+    insecure_ssl: false
     only_pools:
         - 'only_pool_1_uuid'
         - 'only_pool_2_uuid'
-    skip_pools:
-        - 'exclude_this_pool_uuid'
+    password: 'ItsSoFluffyImGonnaDIE!'
     pool_uuid_map:
         - pool_1_uuid: 'My pool number 1'
+    timeout: 60
+    url: 'https://vmware.hori.zon'
+    user: 'exporter_user'
+    skip_pools:
+        - 'exclude_this_pool_uuid'
 ----
 
 The `horizon_api` dictionary contains information about accessing the Horizon REST API:
@@ -74,14 +76,16 @@ The `horizon_api` dictionary contains information about accessing the Horizon RE
 [width="100%",cols="<34%,<41%,<25%",options="header",]
 |===
 |_Option_ |_Dwscription_ |_Mandatory_ 
-|`url` |URL of the Horizon server |`yes`
-|`insecure_ssl` |Disable SSL certificate verification |`no`
-|`user` |Username for authentication |`yes`
+|`ca_file` |CA file in PEM format for validation of SSL server certificate if not in system CA store |`no`
 |`domain` |AD-Domain of the user for authentication |`yes`
-|`password` |Password of the user used for authentication |`yes`
+|`insecure_ssl` |Disable SSL certificate verification |`no`
 |`only_pools` |Limit metrics to list of pool *UUIDs* |`no`
-|`skip_pools` |Report usage for pools _except_ for this list of pool *UUIDs* |`no`
+|`password` |Password of the user used for authentication |`yes`
 |`pool_uuid_map` |Dictionary to map pool UUIDs to a name |`no`
+|`skip_pools` |Report usage for pools _except_ for this list of pool *UUIDs* |`no`
+|`timeout` |HTTP timeout in seconds, default: 60 seconds |`no`
+|`url` |URL of the Horizon server |`yes`
+|`user` |Username for authentication |`yes`
 |===
 
 NOTE: Pools are referenced by their UUIDs because there is not other unique way to identify pools. Name and display names are not unique.
