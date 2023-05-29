@@ -6,14 +6,14 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-chrono = "0.4.24"
+chrono = "0.4.25"
 fern = "0.6.2"
 getopts = "0.2.21"
 lazy_static = "1.4.0"
-log = "0.4.17"
+log = "0.4.18"
 prometheus = { version = "0.13.3", features = ["process"] }
-reqwest = { version = "0.11.16", features = ["blocking", "native-tls"] }
-serde = { version = "1.0.160", features = ["derive"] }
+reqwest = { version = "0.11.18", features = ["blocking", "native-tls"] }
+serde = { version = "1.0.163", features = ["derive"] }
 serde_json = "1.0.96"
 serde_yaml = "0.9.21"
 simple-error = "0.3.0"
